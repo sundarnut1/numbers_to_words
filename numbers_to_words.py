@@ -1,15 +1,17 @@
 import sys
+import threading
 from decimal import Decimal, ROUND_HALF_UP
+
 
 class NumberTranslator:
     __instance = None
     __allow_creation = False
+    __instance_lock = threading.Lock()
 
     def __init__(self):
-
         if not NumberTranslator.__allow_creation:
             raise RuntimeError("This class is a singleton! Use get_instance() method to get the instance.")
-        
+
         self.__number_mapping = {
             0: "zero",
             1: "one",
@@ -38,9 +40,9 @@ class NumberTranslator:
             60: "sixty",
             70: "seventy",
             80: "eighty",
-            90: "ninety"            
+            90: "ninety",
         }
-        
+
         self.__power_mapping = {
             1: " thousand",
             2: " million",
@@ -56,29 +58,45 @@ class NumberTranslator:
             12: " undecillion",
             13: " duodecillion",
             14: " tredecillion",
-            15: " quattuordecillion"
-        }        
+            15: " quattuordecillion",
+        }
 
     @staticmethod
     def get_instance():
-
         if NumberTranslator.__instance is None:
-            NumberTranslator.__allow_creation = True
-            NumberTranslator.__instance = NumberTranslator()
-            NumberTranslator.__allow_creation = False
-
+            with NumberTranslator.__instance_lock:
+                if NumberTranslator.__instance is None:
+                    NumberTranslator.__allow_creation = True
+                    NumberTranslator.__instance = NumberTranslator()
+                    NumberTranslator.__allow_creation = False
         return NumberTranslator.__instance
-
 
     def get_word(self, number):
         return self.__number_mapping.get(number, "Number not found")
-
 
     def get_power_word(self, number):
         return self.__power_mapping.get(number, "Number not found")
 
 
+def _validate_non_negative_int(value, name="number"):
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"{name} must be a non-negative integer.")
+    if value < 0:
+        raise ValueError(f"{name} must be non-negative.")
+
+
+def _validate_non_negative_decimal(value, name="amount"):
+    try:
+        number = Decimal(str(value))
+    except Exception as exc:
+        raise ValueError(f"{name} must be a valid non-negative number.") from exc
+
+    if number < 0:
+        raise ValueError(f"{name} must be non-negative.")
+
+
 def convert_to_float_text(str_float_number):
+    _validate_non_negative_decimal(str_float_number, "amount")
 
     amount = Decimal(str_float_number).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     int_part = int(amount)
@@ -92,6 +110,7 @@ def convert_to_float_text(str_float_number):
 
 
 def convert_to_float_text_with_currency(str_float_number):
+    _validate_non_negative_decimal(str_float_number, "amount")
 
     int_part, cents_value = convert_to_float_text(str_float_number)
 
@@ -104,7 +123,6 @@ def convert_to_float_text_with_currency(str_float_number):
 
     if cents_value > 0:
         answer += " and " + convert_to_text(cents_value)
-
         if cents_value == 1:
             answer += " cent"
         else:
@@ -112,9 +130,9 @@ def convert_to_float_text_with_currency(str_float_number):
 
     return answer
 
-    
 
 def convert_to_text(number):
+    _validate_non_negative_int(number, "number")
 
     # Get a reference to the singleton instance
     translator = NumberTranslator.get_instance()
@@ -130,59 +148,44 @@ def convert_to_text(number):
         return "Number too large"
 
     while True:
-
         unit = 0
         added = 0
 
         power_10 = 10 ** (threes * 3)
         working_set = number // power_10
         next_set = number % power_10
-        over = working_set % 100;
+        over = working_set % 100
 
         if working_set > 99:
-
             if len(num_builder) > 0:
-                num_builder += ' '
+                num_builder += " "
 
             num_builder += translator.get_word(working_set // 100) + " hundred"
-
             added = 1
 
         if over >= 20:
-
             unit = over % 10
 
             if added == 1:
                 num_builder += " and "
-
             elif added == 0:
                 if len(num_builder) > 0:
-                    num_builder += ' '
+                    num_builder += " "
 
             num_builder += translator.get_word((over // 10) * 10)
-
             added |= 2
-
         else:
             unit = over
 
-
         if unit > 0:
-            
-            if added & 2 == 2: 
-                # Suffix a space if the tens place was added
-                num_builder += ' '
-
+            if added & 2 == 2:
+                num_builder += " "
             elif added & 1 == 1:
-                # Suffix " and " if we have a tens and a units place
                 num_builder += " and "
-
-            elif len(num_builder) > 0 and num_builder[-1] != ' ': 
-                # Suffix a space if num_builder is not blank and we have a non-blank value as the last character
-                num_builder += ' '
+            elif len(num_builder) > 0 and num_builder[-1] != " ":
+                num_builder += " "
 
             num_builder += translator.get_word(unit)
-
             added |= 4
 
         if added > 0 and threes > 0:
@@ -198,12 +201,12 @@ def convert_to_text(number):
 
 
 def convert_to_text_with_currency(number):
+    _validate_non_negative_int(number, "number")
 
     number_as_text = convert_to_text(number)
 
     if number == 1:
         number_as_text += " dollar"
-
     elif number_as_text != "Number too large":
         number_as_text += " dollars"
 
@@ -211,45 +214,23 @@ def convert_to_text_with_currency(number):
 
 
 def main():
-
     if len(sys.argv) >= 2:
         str_number = sys.argv[1]
 
-        if '.' not in str_number:
-
+        if "." not in str_number:
             try:
-
                 number = int(str_number)
-
-                if number < 0:
-                    print("Please enter a valid positive number.")
-                    return
-
                 print(convert_to_text_with_currency(number))
-
             except (ValueError, TypeError):
                 print("Please enter a valid positive number.")
-
         else:
-
             try:
-
-                 amount = Decimal(str_number).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-                 int_part = int(amount)
-                 cents_value = int((amount - int_part) * 100)
-
-                 if amount < 0:
-                     print("Please enter a valid positive number.")
-                     return
-
-                 print(convert_to_float_text_with_currency(str_number))
-
+                print(convert_to_float_text_with_currency(str_number))
             except (ValueError, TypeError):
-                print("Boo hoo hoo!")
                 print("Please enter a valid positive number with a decimal point, if required.")
-
     else:
 
+        
         numbers = [0, 1, 20, 31, 100, 156, 400, 985, 1000, 1005, 12345, 100000, 800005, 2000005, 12345678, 9876543210, 1234567890, 1000000000000001, 90000000000000000000000000000000000000, 12345678901234567890123456789012345678901234567890]
         float_numbers = ["0.", "1.5", "20.999", "31.95", "100.00", "156.58984", "400.336", "985.1", "1000.5", ".9876", "12345", "100000.012", "800005.106", "1000.", "1234567890987654321.111"]
 
