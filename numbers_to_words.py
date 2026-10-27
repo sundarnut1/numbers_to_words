@@ -238,12 +238,7 @@ def main():
                  int_part = int(amount)
                  cents_value = int((amount - int_part) * 100)
 
-                 print("Integer part:", int_part)
-                 print("Cents value:", cents_value)
-
-                 float_number = float(int_part + cents_value / 100)
-
-                 if float_number < 0:
+                 if amount < 0:
                      print("Please enter a valid positive number.")
                      return
 
