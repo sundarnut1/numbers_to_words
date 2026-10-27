@@ -52,7 +52,10 @@ class NumberTranslator:
             9: " octillion",
             10: " nonillion",
             11: " decillion",
-            12: " undecillion"
+            12: " undecillion",
+            13: " duodecillion",
+            14: " tredecillion",
+            15: " quattuordecillion"
         }        
 
     @staticmethod
@@ -74,6 +77,41 @@ class NumberTranslator:
         return self.__power_mapping.get(number, "Number not found")
 
 
+def convert_to_float_text(float_number):
+
+    number = ""
+
+    int_part = int(float_number)
+    float_part = round(float_number - int_part, 2)
+
+    cents_value = int(float_part * 100)
+    if cents_value == 100:
+        int_part += 1
+        cents_value = 0
+
+    dollar_part = convert_to_text(int_part)
+
+    if cents_value < 100:
+        cent_part = convert_to_text(cents_value)
+
+    if int_part == 1:
+        number = dollar_part + " dollar"
+    else:
+        number = dollar_part + " dollars"
+
+    if cents_value > 0:
+        number += " and "
+
+        number += cent_part
+
+        if cents_value == 1:
+            number += " cent"
+        else:
+            number += " cents"
+
+    return number
+
+
 def convert_to_text(number):
 
     # Get a reference to the singleton instance
@@ -86,7 +124,7 @@ def convert_to_text(number):
     num_builder = ""
     threes = (len(str(number)) - 1) // 3
 
-    if threes > 12:
+    if threes > 15:
         return "Number too large"
 
     while True:
@@ -156,27 +194,49 @@ def convert_to_text(number):
 
     return num_builder
 
+
 def main():
 
     if len(sys.argv) >= 2:
         str_number = sys.argv[1]
 
-        try:
-            number = int(str_number)
+        if '.' not in str_number:
 
-            if number < 0:
+            try:
+
+                number = int(str_number)
+
+                if number < 0:
+                    print("Please enter a valid positive number.")
+                    return
+
+                print(convert_to_text(number))
+
+            except (ValueError, TypeError):
                 print("Please enter a valid positive number.")
-                return
 
-            print(convert_to_text(number))
+        else:
 
-        except (ValueError, TypeError):
-            print("Please enter a valid positive number.")
+            try:
+
+                float_number = float(str_number)
+
+                if float_number < 0:
+                    print("Please enter a valid positive number.")
+                    return
+
+                number = convert_to_float_text(number)
+
+            except(ValueError, TypeError):
+                print("Please enter a valid positive number with a decimal point, if required.")
 
     else:
 
-        numbers = [0, 1, 20, 31, 100, 156, 400, 985, 1000, 1005, 12345, 100000, 800005, 2000005, 12345678, 9876543210, 1234567890, 1000000000000001, 90000000000000000000000000000000000000]
-        valid_answers = ["zero", "one", "twenty", "thirty one", "one hundred", "one hundred and fifty six", "four hundred", "nine hundred and eighty five", "one thousand", "one thousand five", "twelve thousand three hundred and forty five", "one hundred thousand", "eight hundred thousand five", "two million five", "twelve million three hundred and forty five thousand six hundred and seventy eight", "nine billion eight hundred and seventy six million five hundred and forty three thousand two hundred and ten", "one billion two hundred and thirty four million five hundred and sixty seven thousand eight hundred and ninety", "one quadrillion one", "ninety undecillion"]
+        numbers = [0, 1, 20, 31, 100, 156, 400, 985, 1000, 1005, 12345, 100000, 800005, 2000005, 12345678, 9876543210, 1234567890, 1000000000000001, 90000000000000000000000000000000000000, 12345678901234567890123456789012345678901234567890]
+        float_numbers = [0., 1.5, 20.999, 31.95, 100.00, 156.58984, 400.336, 985.1, 1000.5, .9876, 12345, 100000.012, 800005.106, 1000.]
+
+        valid_answers = ["zero", "one", "twenty", "thirty one", "one hundred", "one hundred and fifty six", "four hundred", "nine hundred and eighty five", "one thousand", "one thousand five", "twelve thousand three hundred and forty five", "one hundred thousand", "eight hundred thousand five", "two million five", "twelve million three hundred and forty five thousand six hundred and seventy eight", "nine billion eight hundred and seventy six million five hundred and forty three thousand two hundred and ten", "one billion two hundred and thirty four million five hundred and sixty seven thousand eight hundred and ninety", "one quadrillion one", "ninety undecillion", "Number too large"]
+        valid_float_answers = ["zero dollars", "one dollar and fifty cents", "twenty one dollars", "thirty one dollars and ninety five cents", "one hundred dollars", "one hundred and fifty six dollars and fifty nine cents", "four hundred dollars and thirty four cents", "nine hundred and eighty five dollars and ten cents", "one thousand dollars and fifty cents", "zero dollars and ninety nine cents", "twelve thousand three hundred and forty five dollars", "one hundred thousand dollars and one cent", "eight hundred thousand five dollars and eleven cents", "one thousand dollars"]
 
         failures = 0
         numbers_in_words = [convert_to_text(number) for number in numbers]
@@ -187,6 +247,18 @@ def main():
             if (numbers_in_words[i] != valid_answers[i]):
                 print(counter, "Test failed for ", numbers[i])
                 print("Expected:", valid_answers[i], "but got:", numbers_in_words[i])
+                failures += 1
+            
+            counter += 1
+
+        float_numbers_in_words = [convert_to_float_text(float_number) for float_number in float_numbers]
+        counter = 1
+
+        for i in range(len(float_numbers)):
+
+            if (float_numbers_in_words[i] != valid_float_answers[i]):
+                print(counter, "Test failed for ", float_numbers[i])
+                print("Expected:", valid_float_answers[i], "but got:", float_numbers_in_words[i])
                 failures += 1
             
             counter += 1
