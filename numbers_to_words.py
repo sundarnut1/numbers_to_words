@@ -234,13 +234,17 @@ def main():
 
             try:
 
-                float_number = float(str_number)
+                 amount = Decimal(str_number).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                 int_part = int(amount)
+                 cents_value = int((amount - int_part) * 100)
 
-                if float_number < 0:
-                    print("Please enter a valid positive number.")
-                    return
+                 float_number = float(int_part + cents_value / 100)
 
-                print(convert_to_float_text_with_currency(float_number))
+                 if float_number < 0:
+                     print("Please enter a valid positive number.")
+                     return
+
+                 print(convert_to_float_text_with_currency(float_number))
 
             except (ValueError, TypeError):
                 print("Please enter a valid positive number with a decimal point, if required.")
