@@ -225,7 +225,7 @@ def main():
                     print("Please enter a valid positive number.")
                     return
 
-                number = convert_to_float_text(number)
+                number = convert_to_float_text(float_number)
 
             except(ValueError, TypeError):
                 print("Please enter a valid positive number with a decimal point, if required.")
