@@ -1,4 +1,5 @@
 import sys
+from decimal import Decimal, ROUND_HALF_UP
 
 class NumberTranslator:
     __instance = None
@@ -79,38 +80,39 @@ class NumberTranslator:
 
 def convert_to_float_text(float_number):
 
-    number = ""
+    amount = Decimal(str(float_number)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    int_part = int(amount)
+    cents_value = int((amount - Decimal(int_part)) * 100)
 
-    int_part = int(float_number)
-    float_part = round(float_number - int_part, 2)
-
-    cents_value = int(float_part * 100)
     if cents_value == 100:
         int_part += 1
         cents_value = 0
 
-    dollar_part = convert_to_text(int_part)
+    return int_part, cents_value
 
-    if cents_value < 100:
-        cent_part = convert_to_text(cents_value)
+
+def convert_to_float_text_with_currency(float_number):
+
+    int_part, cents_value = convert_to_float_text(float_number)
+
+    answer = convert_to_text(int_part)
 
     if int_part == 1:
-        number = dollar_part + " dollar"
+        answer += " dollar"
     else:
-        number = dollar_part + " dollars"
+        answer += " dollars"
 
     if cents_value > 0:
-        number += " and "
-
-        number += cent_part
+        answer += " and " + convert_to_text(cents_value)
 
         if cents_value == 1:
-            number += " cent"
+            answer += " cent"
         else:
-            number += " cents"
+            answer += " cents"
 
-    return number
+    return answer
 
+    
 
 def convert_to_text(number):
 
@@ -195,6 +197,19 @@ def convert_to_text(number):
     return num_builder
 
 
+def convert_to_text_with_currency(number):
+
+    number_as_text = convert_to_text(number)
+
+    if number == 1:
+        number_as_text += " dollar"
+
+    elif number_as_text != "Number too large":
+        number_as_text += " dollars"
+
+    return number_as_text
+
+
 def main():
 
     if len(sys.argv) >= 2:
@@ -210,7 +225,7 @@ def main():
                     print("Please enter a valid positive number.")
                     return
 
-                print(convert_to_text(number))
+                print(convert_to_text_with_currency(number))
 
             except (ValueError, TypeError):
                 print("Please enter a valid positive number.")
@@ -225,9 +240,12 @@ def main():
                     print("Please enter a valid positive number.")
                     return
 
-                number = convert_to_float_text(float_number)
+                print(convert_to_float_text_with_currency(float_number))
 
-            except(ValueError, TypeError):
+            except (ValueError, TypeError):
+                print("Please enter a valid positive number with a decimal point, if required.")
+
+            except Exception:
                 print("Please enter a valid positive number with a decimal point, if required.")
 
     else:
@@ -235,11 +253,44 @@ def main():
         numbers = [0, 1, 20, 31, 100, 156, 400, 985, 1000, 1005, 12345, 100000, 800005, 2000005, 12345678, 9876543210, 1234567890, 1000000000000001, 90000000000000000000000000000000000000, 12345678901234567890123456789012345678901234567890]
         float_numbers = [0., 1.5, 20.999, 31.95, 100.00, 156.58984, 400.336, 985.1, 1000.5, .9876, 12345, 100000.012, 800005.106, 1000.]
 
-        valid_answers = ["zero", "one", "twenty", "thirty one", "one hundred", "one hundred and fifty six", "four hundred", "nine hundred and eighty five", "one thousand", "one thousand five", "twelve thousand three hundred and forty five", "one hundred thousand", "eight hundred thousand five", "two million five", "twelve million three hundred and forty five thousand six hundred and seventy eight", "nine billion eight hundred and seventy six million five hundred and forty three thousand two hundred and ten", "one billion two hundred and thirty four million five hundred and sixty seven thousand eight hundred and ninety", "one quadrillion one", "ninety undecillion", "Number too large"]
-        valid_float_answers = ["zero dollars", "one dollar and fifty cents", "twenty one dollars", "thirty one dollars and ninety five cents", "one hundred dollars", "one hundred and fifty six dollars and fifty nine cents", "four hundred dollars and thirty four cents", "nine hundred and eighty five dollars and ten cents", "one thousand dollars and fifty cents", "zero dollars and ninety nine cents", "twelve thousand three hundred and forty five dollars", "one hundred thousand dollars and one cent", "eight hundred thousand five dollars and eleven cents", "one thousand dollars"]
+        valid_answers = ["zero dollars",
+                         "one dollar",
+                         "twenty dollars",
+                         "thirty one dollars",
+                         "one hundred dollars",
+                         "one hundred and fifty six dollars",
+                         "four hundred dollars",
+                         "nine hundred and eighty five dollars",
+                         "one thousand dollars",
+                         "one thousand five dollars", 
+                         "twelve thousand three hundred and forty five dollars",
+                         "one hundred thousand dollars",
+                         "eight hundred thousand five dollars", 
+                         "two million five dollars",
+                         "twelve million three hundred and forty five thousand six hundred and seventy eight dollars",
+                         "nine billion eight hundred and seventy six million five hundred and forty three thousand two hundred and ten dollars",
+                         "one billion two hundred and thirty four million five hundred and sixty seven thousand eight hundred and ninety dollars",
+                         "one quadrillion one dollars",
+                         "ninety undecillion dollars",
+                         "Number too large"]
+
+        valid_float_answers = ["zero dollars",
+                                "one dollar and fifty cents",
+                                "twenty one dollars",
+                                "thirty one dollars and ninety five cents",
+                                "one hundred dollars",
+                                "one hundred and fifty six dollars and fifty nine cents",
+                                "four hundred dollars and thirty four cents",
+                                "nine hundred and eighty five dollars and ten cents",
+                                "one thousand dollars and fifty cents",
+                                "zero dollars and ninety nine cents",
+                                "twelve thousand three hundred and forty five dollars",
+                                "one hundred thousand dollars and one cent",
+                                "eight hundred thousand five dollars and eleven cents",
+                                "one thousand dollars"]
 
         failures = 0
-        numbers_in_words = [convert_to_text(number) for number in numbers]
+        numbers_in_words = [convert_to_text_with_currency(number) for number in numbers]
         counter = 1
 
         for i in range(len(numbers)):
@@ -251,7 +302,7 @@ def main():
             
             counter += 1
 
-        float_numbers_in_words = [convert_to_float_text(float_number) for float_number in float_numbers]
+        float_numbers_in_words = [convert_to_float_text_with_currency(float_number) for float_number in float_numbers]
         counter = 1
 
         for i in range(len(float_numbers)):
