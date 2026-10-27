@@ -78,9 +78,9 @@ class NumberTranslator:
         return self.__power_mapping.get(number, "Number not found")
 
 
-def convert_to_float_text(float_number):
+def convert_to_float_text(str_float_number):
 
-    amount = Decimal(str(float_number)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    amount = Decimal(str_float_number).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     int_part = int(amount)
     cents_value = int((amount - Decimal(int_part)) * 100)
 
@@ -91,9 +91,9 @@ def convert_to_float_text(float_number):
     return int_part, cents_value
 
 
-def convert_to_float_text_with_currency(float_number):
+def convert_to_float_text_with_currency(str_float_number):
 
-    int_part, cents_value = convert_to_float_text(float_number)
+    int_part, cents_value = convert_to_float_text(str_float_number)
 
     answer = convert_to_text(int_part)
 
@@ -238,24 +238,25 @@ def main():
                  int_part = int(amount)
                  cents_value = int((amount - int_part) * 100)
 
+                 print("Integer part:", int_part)
+                 print("Cents value:", cents_value)
+
                  float_number = float(int_part + cents_value / 100)
 
                  if float_number < 0:
                      print("Please enter a valid positive number.")
                      return
 
-                 print(convert_to_float_text_with_currency(float_number))
+                 print(convert_to_float_text_with_currency(str_number))
 
             except (ValueError, TypeError):
-                print("Please enter a valid positive number with a decimal point, if required.")
-
-            except Exception:
+                print("Boo hoo hoo!")
                 print("Please enter a valid positive number with a decimal point, if required.")
 
     else:
 
         numbers = [0, 1, 20, 31, 100, 156, 400, 985, 1000, 1005, 12345, 100000, 800005, 2000005, 12345678, 9876543210, 1234567890, 1000000000000001, 90000000000000000000000000000000000000, 12345678901234567890123456789012345678901234567890]
-        float_numbers = [0., 1.5, 20.999, 31.95, 100.00, 156.58984, 400.336, 985.1, 1000.5, .9876, 12345, 100000.012, 800005.106, 1000.]
+        float_numbers = ["0.", "1.5", "20.999", "31.95", "100.00", "156.58984", "400.336", "985.1", "1000.5", ".9876", "12345", "100000.012", "800005.106", "1000.", "1234567890987654321.111"]
 
         valid_answers = ["zero dollars",
                          "one dollar",
@@ -291,7 +292,8 @@ def main():
                                 "twelve thousand three hundred and forty five dollars",
                                 "one hundred thousand dollars and one cent",
                                 "eight hundred thousand five dollars and eleven cents",
-                                "one thousand dollars"]
+                                "one thousand dollars",
+                                "one quintillion two hundred and thirty four quadrillion five hundred and sixty seven trillion eight hundred and ninety billion nine hundred and eighty seven million six hundred and fifty four thousand three hundred and twenty one dollars and eleven cents"]
 
         failures = 0
         numbers_in_words = [convert_to_text_with_currency(number) for number in numbers]
