@@ -149,7 +149,7 @@ def convert_to_text(number):
     threes = (len(str(number)) - 1) // 3
 
     if threes > 15:
-        return "Number too large"
+        raise ValueError(f"{number} too large to convert to text.")
 
     while threes >= 0:
         
@@ -229,7 +229,7 @@ def main():
     else:
 
         
-        numbers = [0, 1, 20, 31, 100, 156, 400, 820, 985, 1000, 1005, 12345, 100000, 800005, 2000005, 12345678, 9876543210, 1234567890, 1000000000000001, 90000000000000000000000000000000000000, 12345678901234567890123456789012345678901234567890]
+        numbers = [0, 1, 20, 31, 100, 156, 400, 820, 985, 1000, 1005, 12345, 100000, 800005, 2000005, 12345678, 9876543210, 1234567890, 1000000000000001, 90000000000000000000000000000000000000]
         float_numbers = ["0.", "1.5", "20.999", "31.95", "100.00", "156.58984", "400.336", "985.1", "1000.5", ".9876", "12345", "100000.012", "800005.106", "1000.", "1234567890987654321.111"]
 
         valid_answers = ["zero dollars",
@@ -251,8 +251,7 @@ def main():
                          "nine billion eight hundred and seventy-six million five hundred and forty-three thousand two hundred and ten dollars",
                          "one billion two hundred and thirty-four million five hundred and sixty-seven thousand eight hundred and ninety dollars",
                          "one quadrillion one dollars",
-                         "ninety undecillion dollars",
-                         "Number too large"]
+                         "ninety undecillion dollars"]
 
         valid_float_answers = ["zero dollars",
                                 "one dollar and fifty cents",
@@ -298,7 +297,18 @@ def main():
 
         counter = 0
         try:
+           # 1 Too large of a number - integer
+           invalid_number = convert_to_text(12345678901234567890123456789012345678901234567890)
+           failures += 1
 
+           print(counter, "Test failed for 12345678901234567890123456789012345678901234567890. Expected ValueError, it succeeded with this value:", invalid_number)
+
+        except (ValueError, TypeError):
+            counter += 1
+
+
+        try:
+           # 2 NaN input
            invalid_nan_number = convert_to_float_text_with_currency("NaN")
            failures += 1
 
@@ -309,7 +319,7 @@ def main():
 
 
         try:
-
+           # 3 Infinity Input
            invalid_infinity_number = convert_to_float_text_with_currency("Infinity")
            failures += 1
 
@@ -320,7 +330,7 @@ def main():
 
 
         try:
-
+           # 4 Negative number input
            invalid_negative_integer = convert_to_text(-100)
            failures += 1
 
@@ -331,14 +341,14 @@ def main():
 
 
         try:
-
+           # 4 Negative floating number input
            invalid_negative_float = convert_to_float_text(-21.22)
            failures += 1
 
            print(counter, "Test failed for Negative Float. Expected ValueError, it succeeded with this value:", invalid_negative_float)
 
         except (ValueError, TypeError):
-            counter += 1            
+            counter += 1   
 
         if failures == 0:
             print("All tests passed!")
