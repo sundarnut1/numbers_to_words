@@ -205,7 +205,7 @@ def convert_to_text_with_currency(number):
 
     if number == 1:
         number_as_text += " dollar"
-    elif number_as_text != "Number too large":
+    else:
         number_as_text += " dollars"
 
     return number_as_text
