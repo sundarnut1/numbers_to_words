@@ -91,6 +91,10 @@ def _validate_non_negative_decimal(value, name="amount"):
     except Exception as exc:
         raise ValueError(f"{name} must be a valid non-negative number.") from exc
 
+    # Check for NaN and Infinity
+    if number.is_nan() or number.is_infinite():
+        raise ValueError(f"{name} must be a finite number.")
+
     if number < 0:
         raise ValueError(f"{name} must be non-negative.")
 
